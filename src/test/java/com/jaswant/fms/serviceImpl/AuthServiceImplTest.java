@@ -1,6 +1,7 @@
 package com.jaswant.fms.serviceImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -32,14 +33,11 @@ class AuthServiceImplTest {
     @Test
     void testLoginSuccess() {
 
-        LoginRequest request =
-                new LoginRequest();
-
+        LoginRequest request = new LoginRequest();
         request.setUsername("admin");
         request.setPassword("admin123");
 
         User user = new User();
-
         user.setUsername("admin");
         user.setPassword("admin123");
 
@@ -55,5 +53,49 @@ class AuthServiceImplTest {
         assertEquals(
                 "jwt-token",
                 response.getToken());
+    }
+
+    @Test
+    void testInvalidUsername() {
+
+        LoginRequest request = new LoginRequest();
+        request.setUsername("wrong");
+        request.setPassword("admin123");
+
+        when(userRepository.findByUsername("wrong"))
+                .thenReturn(Optional.empty());
+
+        RuntimeException ex =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> authServiceImpl.login(request));
+
+        assertEquals(
+                "Invalid Username",
+                ex.getMessage());
+    }
+
+    @Test
+    void testInvalidPassword() {
+
+        LoginRequest request = new LoginRequest();
+        request.setUsername("admin");
+        request.setPassword("wrong");
+
+        User user = new User();
+        user.setUsername("admin");
+        user.setPassword("admin123");
+
+        when(userRepository.findByUsername("admin"))
+                .thenReturn(Optional.of(user));
+
+        RuntimeException ex =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> authServiceImpl.login(request));
+
+        assertEquals(
+                "Invalid Password",
+                ex.getMessage());
     }
 }
